@@ -1,3 +1,54 @@
+# Implementation of DDPM-IP
+
+## Installation
+The installation is the same with [guided-diffusion](https://github.com/openai/guided-diffusion)
+```
+git clone https://github.com/KevinWang676/DDPM-IP.git
+cd DDPM-IP
+pip install -e .
+```
+
+Then run `conda install -c conda-forge mpi4py mpich` to install `mpi4py` and run `pip install torch-summary`. Run `python cifar10.py` to get CIFAR-10 dataset. Create a folder named `autodl-tmp` and run `export OPENAI_LOGDIR=/root/autodl-tmp` to specify the path.
+
+## Training
+Now you can train the DDPM-IP using the folder `cifar_train`. Run the following code using 2 GPUs:
+```
+mpiexec -n 2 python scripts/image_train.py --input_pertub 0.15 \
+--data_dir cifar_train \
+--image_size 32 --use_fp16 True --num_channels 128 --num_head_channels 32 --num_res_blocks 3 \
+--attention_resolutions 16,8 --resblock_updown True --use_new_attention_order True \
+--learn_sigma True --dropout 0.3 --diffusion_steps 1000 --noise_schedule cosine --use_scale_shift_norm True \
+--rescale_learned_sigmas True --schedule_sampler loss-second-moment --lr 1e-4 --batch_size 64
+```
+
+The checkpoints you would like to use will have names like `ema_0.9999_200000.pt`.
+
+## Sampling
+For example, you can sample 50k images from CIFAR-10 by: 
+```
+mpirun python scripts/image_sample.py \
+--image_size 32 --timestep_respacing 100 \
+--model_path output/ema_0.9999_200000.pt \
+--num_channels 128 --num_head_channels 32 --num_res_blocks 3 --attention_resolutions 16,8 \
+--resblock_updown True --use_new_attention_order True --learn_sigma True --dropout 0.3 \
+--diffusion_steps 1000 --noise_schedule cosine --use_scale_shift_norm True --batch_size 256 --num_samples 50000
+```
+
+## Evaluation
+Installation:
+```
+pip install tensorflow==2.4
+conda install cudatoolkit=11.0
+conda install -c conda-forge cudnn
+pip install scipy
+pip install requests
+pip install tqdm
+```
+
+Then run `python evaluator.py cifar_train.npz output/samples_50000x32x32x3.npz`.
+
+# Original README.md
+
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/input-perturbation-reduces-exposure-bias-in/image-generation-on-celeba-64x64)](https://paperswithcode.com/sota/image-generation-on-celeba-64x64?p=input-perturbation-reduces-exposure-bias-in)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/input-perturbation-reduces-exposure-bias-in/image-generation-on-lsun-tower-64x64)](https://paperswithcode.com/sota/image-generation-on-lsun-tower-64x64?p=input-perturbation-reduces-exposure-bias-in)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/input-perturbation-reduces-exposure-bias-in/image-generation-on-imagenet-32x32)](https://paperswithcode.com/sota/image-generation-on-imagenet-32x32?p=input-perturbation-reduces-exposure-bias-in)
@@ -31,16 +82,7 @@ the installation is the same with [guided-diffusion](https://github.com/openai/g
 ```
 git clone https://github.com/forever208/DDPM-IP.git
 cd DDPM-IP
-conda create -n ADM python=3.8
-conda activate ADM
 pip install -e .
-(note that, pytorch 1.10~1.13 is recommended as our experiments in paper were done with pytorch 1.10 and pytorch 2.0 has not been tested by us in this repo)
-
-# install the missing packages
-conda install mpi4py
-conda install numpy
-pip install Pillow
-pip install opencv-python
 ```
 
 
