@@ -762,7 +762,7 @@ class GaussianDiffusion:
             model_kwargs = {}
         if noise is None:
             noise = th.randn_like(x_start)
-        new_noise = noise/2 + self.input_pertub * th.randn_like(noise) + th.randn_like(noise)/2  # new_noise = z/2 + \gamma * \xi + \zeta/2 
+        new_noise = noise + self.input_pertub * th.randn_like(noise) * _extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)**2 # self.input_pertub=0.2
         x_t = self.q_sample(x_start, t, noise=new_noise)
 
         terms = {}
